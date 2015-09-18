@@ -38,10 +38,10 @@ implements Resource
     {
         try
         {
-            OAuthService service = ApplicationOAuthService.valueOf(api.toUpperCase( ));
+            ApplicationOAuthService service = ApplicationOAuthService.valueOf(api.toUpperCase( ));
             if (service == null)
             {
-                service = ApplicationOAuthService.TWITTER;
+                Response.status(Status.BAD_REQUEST).build( );
             }
             Token token = service.getRequestToken( );
             return Response.temporaryRedirect(new URI (service.getAuthorizationUrl(token))).build( );
