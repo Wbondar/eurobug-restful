@@ -58,19 +58,19 @@ implements Resource
     @Path("/{api}/create")
     public Response oauth (@PathParam("api") String api)
     {
-    	OAuthService service = ApplicationOAuthService.valueOf(api.toUpperCase( ));
-    	if (service == null)
-    	{
-    	    service = ApplicationOAuthService.TWITTER;
-    	}
-    	Token token = service.getRequestToken( );
         try
         {
+            OAuthService service = ApplicationOAuthService.valueOf(api.toUpperCase( ));
+            if (service == null)
+            {
+                service = ApplicationOAuthService.TWITTER;
+            }
+            Token token = service.getRequestToken( );
             return Response.temporaryRedirect(new URI (service.getAuthorizationUrl(token))).build( );
         } 
-        catch (URISyntaxException e1)
+        catch (Exception e1)
         {
-            throw new WebApplicationException (e1);
+            throw new WebApplicationException (e1.getMessage(), e1);
         }
     }
     
