@@ -19,10 +19,14 @@ implements Factory<Summary>
 	public Summary create (Employee owner)
 	{
 		Summary summary = new Summary (NumericIdentificator.<Summary>valueOf(SummaryFactory.counter.getAndIncrement( )), owner);
+		if (summary != null)
+		{
 			SummaryOwnershipFactory summaryOwnershipFactory = Factories.<SummaryOwnershipFactory>getInstance(SummaryOwnershipFactory.class);
 			summaryOwnershipFactory.create(owner, summary);
 			SummaryFactory.cache.add(summary);
 			return summary;
+		}
+		return this.getEmpty( );	
 	}
 
 	public Set<Summary> retrieveOwnedBy (Employee employee)

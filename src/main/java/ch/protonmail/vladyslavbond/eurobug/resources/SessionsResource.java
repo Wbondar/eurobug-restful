@@ -1,9 +1,12 @@
 package ch.protonmail.vladyslavbond.eurobug.resources;
 
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ResourceBundle;
 
 import javax.ws.rs.CookieParam;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -16,7 +19,8 @@ import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import org.json.JSONObject;
+import org.scribe.builder.ServiceBuilder;
+import org.scribe.builder.api.TwitterApi;
 import org.scribe.model.OAuthRequest;
 import org.scribe.model.Token;
 import org.scribe.model.Verb;
@@ -27,41 +31,20 @@ import ch.protonmail.vladyslavbond.eurobug.domain.Account;
 import ch.protonmail.vladyslavbond.eurobug.domain.AccountFactory;
 import ch.protonmail.vladyslavbond.eurobug.domain.Factories;
 import ch.protonmail.vladyslavbond.eurobug.resources.oauth.ApplicationOAuthService;
+import ch.protonmail.vladyslavbond.eurobug.utils.Password;
+import ch.protonmail.vladyslavbond.eurobug.utils.Username;
 
 @Path("/sessions")
 public final class SessionsResource
 implements Resource
-{   
-    @GET
-    @Path("/{api}/create")
-    public Response oauth (@PathParam("api") String api)
+{
+    @POST
+    @Path("/create")
+    @Produces({MediaType.APPLICATION_XML, MediaType.TEXT_PLAIN})
+    public Response create (@FormParam("username") Username username, @FormParam("password") String password)
     {
-        try
-        {
-            ApplicationOAuthService service = ApplicationOAuthService.valueOf(api.toUpperCase( ));
-            if (service == null)
-            {
-                Response.status(Status.BAD_REQUEST).build( );
-            }
-            Token token = service.getRequestToken( );
-            return Response.temporaryRedirect(new URI (service.getAuthorizationUrl(token))).build( );
-        } 
-        catch (Exception e1)
-        {
-            throw new WebApplicationException (e1.getMessage(), e1);
-        } finally {
-            return Response.serverError( ).build( );
-        }
-    }
-    
-    private Response create (ApplicationOAuthService service, Long id, String name)
-    {
-        AccountFactory accountFactory = Factories.<AccountFactory>getInstance(AccountFactory.class);
-        Account account = accountFactory.retrieve(service.getId( ), id);
-        if (account == null)
-        {
-            account = accountFactory.create(service.getId( ), id, name);
-        }
+    	AccountFactory accountFactory = Factories.<AccountFactory>getInstance(AccountFactory.class);
+        Account account = accountFactory.retrieve(username, password);
         if (account != null)
         {
             Session session = Session.newInstance(account);
@@ -71,19 +54,23 @@ implements Resource
         return Response.status(Status.BAD_REQUEST).entity(accountFactory.getEmpty( )).build( );
     }
     
-    private Response createWithTwitter (String body)
+    @GET
+    @Path("/{api}/create")
+    public Response oauth (@PathParam("api") String api)
     {
+    	OAuthService service = ApplicationOAuthService.valueOf(api.toUpperCase( ));
+    	if (service == null)
+    	{
+    	    service = ApplicationOAuthService.TWITTER;
+    	}
+    	Token token = service.getRequestToken( );
         try
         {
-            JSONObject json = new JSONObject (body);
-            Long id = json.getLong("id");
-            /*String screenName = json.getString("screen_name");*/
-            String name = json.getString("name");
-            return this.create(ApplicationOAuthService.TWITTER, id, name);
+            return Response.temporaryRedirect(new URI (service.getAuthorizationUrl(token))).build( );
         } 
-        catch (Exception e)
+        catch (URISyntaxException e1)
         {
-            throw new WebApplicationException ("Failed to authorizate user with twitter.", e);
+            throw new WebApplicationException (e1);
         }
     }
     
@@ -100,7 +87,7 @@ implements Resource
 
         org.scribe.model.Response response = request.send();
 
-        return this.createWithTwitter(response.getBody());
+        return Response.ok(response.getBody()).build();
     }
 
     @GET 
