@@ -2,7 +2,6 @@ package ch.protonmail.vladyslavbond.eurobug.domain;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
 
 import ch.protonmail.vladyslavbond.eurobug.utils.*;
 
@@ -25,27 +24,22 @@ public class Account
 
 	private Account ( )
 	{
-		this(0, "nominevacans");
+		this(0L, "nominevacans");
 	}
 
-	private Account (int id, String name)
+	private Account (long id, String name)
 	{
 		this.id   = id;
 		this.name = name;
 	}
 
-	Account (Identificator<Account> id, Username name)
-	{
-		this(((NumericIdentificator<Account>)id).intValue( ), name.toString( ));
-	}
-
 	Account (Identificator<Account> id, String name)
 	{
-		this(id, Username.valueOf(name));
+		this(((NumericIdentificator<Account>)id).longValue( ), name);
 	}
 
 	@XmlAttribute(name = "id")
-	private final int id;
+	private final long id;
 
 	public final Identificator<Account> getId ( )
 	{
