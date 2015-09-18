@@ -21,6 +21,12 @@ implements OAuthService
     , GOOGLE   (GoogleApi.class, ResourceBundle.getBundle("GOOGLE"))
     , VKONTAKTE       (VkontakteApi.class, ResourceBundle.getBundle("VKONTAKTE")) */
     ;
+      
+    public Integer getId ( )
+    {
+        // TODO replace this with proper code after another providers will be implemented
+        return 1;
+    }
     
     private ApplicationOAuthService (Class<? extends Api> typeOfAPI, String key, String secret, String callback)
     {

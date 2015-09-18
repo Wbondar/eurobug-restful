@@ -47,13 +47,9 @@ implements Factory<Skill>
 			if (skill.getId( ).equals(id))
 			{
 				Skill updatedSkill = new Skill (id, newTitle);
-				if (updatedSkill != null)
-				{
 					SkillFactory.cache.remove(skill);
 					SkillFactory.cache.add(updatedSkill);
 					return updatedSkill;
-				}
-				return this.getEmpty( );
 			}
 		}
 		return this.getEmpty( );
