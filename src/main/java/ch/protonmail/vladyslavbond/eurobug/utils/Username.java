@@ -1,5 +1,6 @@
 package ch.protonmail.vladyslavbond.eurobug.utils;
 
+@Deprecated
 public final class Username
 implements CharSequence
 {

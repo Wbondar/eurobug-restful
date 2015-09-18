@@ -37,33 +37,17 @@ import ch.protonmail.vladyslavbond.eurobug.utils.Username;
 @Path("/sessions")
 public final class SessionsResource
 implements Resource
-{
-    @POST
-    @Path("/create")
-    @Produces({MediaType.APPLICATION_XML, MediaType.TEXT_PLAIN})
-    public Response create (@FormParam("username") Username username, @FormParam("password") String password)
-    {
-    	AccountFactory accountFactory = Factories.<AccountFactory>getInstance(AccountFactory.class);
-        Account account = accountFactory.retrieve(username, password);
-        if (account != null)
-        {
-            Session session = Session.newInstance(account);
-            NewCookie cookie = new NewCookie ("JSESSIONID", session.getId( ).toString( ));
-            return Response.ok(account).cookie(cookie).build( );
-        }
-        return Response.status(Status.BAD_REQUEST).entity(accountFactory.getEmpty( )).build( );
-    }
-    
+{   
     @GET
     @Path("/{api}/create")
     public Response oauth (@PathParam("api") String api)
     {
-    	OAuthService service = ApplicationOAuthService.valueOf(api.toUpperCase( ));
-    	if (service == null)
-    	{
-    	    service = ApplicationOAuthService.TWITTER;
-    	}
-    	Token token = service.getRequestToken( );
+        OAuthService service = ApplicationOAuthService.valueOf(api.toUpperCase( ));
+        if (service == null)
+        {
+            service = ApplicationOAuthService.TWITTER;
+        }
+        Token token = service.getRequestToken( );
         try
         {
             return Response.temporaryRedirect(new URI (service.getAuthorizationUrl(token))).build( );
@@ -90,20 +74,13 @@ implements Resource
         return Response.ok(response.getBody()).build();
     }
 
-    @GET 
-    @Path("/create")
-    public String create ( )
-    {
-        return "<form method='POST' action='/sessions/create'><input type='text' name='username' /><input type='password' name='password' /><input type='submit' /></form>";
-    }
-
     @POST
     @Path("/destroy")
     @Produces(MediaType.TEXT_HTML)
     public Response destroy (@CookieParam("JSESSIONID") Session session)
     {
-    	// TODO
-    	session.destroy( );
+        // TODO
+        session.destroy( );
         return null;
     }
 }
