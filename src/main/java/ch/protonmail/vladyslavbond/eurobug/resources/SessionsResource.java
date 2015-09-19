@@ -46,7 +46,7 @@ implements Resource
         OAuthService service = ApplicationOAuthService.valueOf(api.toUpperCase( ));
         if (service == null)
         {
-            service = ApplicationOAuthService.TWITTER;
+            return Response.status(Status.BAD_REQUEST).entity("Unknown OAuth API provider.").build( );
         }
         Token token = service.getRequestToken( );
         try
@@ -61,39 +61,51 @@ implements Resource
     
     @GET
     @Path("/twitter/callback")
+    @Produces(MediaType.TEXT_PLAIN)
     public Response twitterToken (@QueryParam("oauth_token") String queryToken, @QueryParam("oauth_verifier") String queryVerifier)
     {
-        Token requestToken = new Token (queryToken, queryVerifier);
-        Verifier verifier = new Verifier (queryVerifier);
-        Token accessToken = ApplicationOAuthService.TWITTER.getAccessToken(requestToken, verifier);
-
-        OAuthRequest request = new OAuthRequest(Verb.GET, ResourceBundle.getBundle("TWITTER").getString("credentials"));
-        ApplicationOAuthService.TWITTER.signRequest(accessToken, request);
-
-        org.scribe.model.Response response = request.send();
-        JSONObject json = new JSONObject (response.getBody());
-        Long id = json.getLong("id");
-        if (id == null)
+        try
         {
-            throw new AssertionError ("Identitifcator is missing.");
-        }
-        AccountFactory accountFactory = Factories.<AccountFactory>getInstance(AccountFactory.class);
-        Account account = accountFactory.retrieve(1, id);
-        if (account == null || account.equals(accountFactory.getEmpty( )))
-        {
-            String screenName = json.getString("screen_name");
-            if (screenName == null || screenName.isEmpty( ))
+            Token requestToken = new Token (queryToken, queryVerifier);
+            Verifier verifier = new Verifier (queryVerifier);
+            Token accessToken = ApplicationOAuthService.TWITTER.getAccessToken(requestToken, verifier);
+
+            OAuthRequest request = new OAuthRequest(Verb.GET, ResourceBundle.getBundle("TWITTER").getString("credentials"));
+            ApplicationOAuthService.TWITTER.signRequest(accessToken, request);
+
+            org.scribe.model.Response response = request.send();
+            JSONObject json = new JSONObject (response.getBody());
+            Long id = json.getLong("id");
+            if (id == null)
             {
-                throw new AssertionError ("Screen name is missing.");
+                throw new AssertionError ("Identitifcator is missing.");
             }
-            account = accountFactory.create(1, id, screenName);
+            AccountFactory accountFactory = Factories.<AccountFactory>getInstance(AccountFactory.class);
+            Account account = accountFactory.retrieve(1, id);
+            if (account == null || account.equals(accountFactory.getEmpty( )))
+            {
+                String screenName = json.getString("screen_name");
+                if (screenName == null || screenName.isEmpty( ))
+                {
+                    throw new AssertionError ("Screen name is missing.");
+                }
+                account = accountFactory.create(1, id, screenName);
+            }
+            if (account != null && !account.equals(accountFactory.getEmpty( )))
+            {
+                Session session = Session.newInstance(account);
+                NewCookie cookie = new NewCookie ("JSESSIONID", session.getId( ).toString( ));
+                return Response.ok( ).cookie(cookie).entity(account).build();   
+            }
+            throw new AssertionError ("Account is mising.");
+        } catch (Exception e) {
+            return Response.serverError( ).entity(e.getLocalizedMessage( )).build( );
         }
-        return Response.ok( ).entity(account).build();
     }
 
     @POST
     @Path("/destroy")
-    @Produces(MediaType.TEXT_HTML)
+    @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_HTML})
     public Response destroy (@CookieParam("JSESSIONID") Session session)
     {
         // TODO
