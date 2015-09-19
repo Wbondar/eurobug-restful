@@ -19,6 +19,7 @@ import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.json.JSONObject;
 import org.scribe.builder.ServiceBuilder;
 import org.scribe.builder.api.TwitterApi;
 import org.scribe.model.OAuthRequest;
@@ -70,8 +71,24 @@ implements Resource
         ApplicationOAuthService.TWITTER.signRequest(accessToken, request);
 
         org.scribe.model.Response response = request.send();
-
-        return Response.ok(response.getBody()).build();
+        JSONObject json = new JSONObject (response.getBody());
+        Long id = json.getLong("id");
+        if (id == null)
+        {
+            throw new AssertionError ("Identitifcator is missing.");
+        }
+        AccountFactory accountFactory = Factories.<AccountFactory>getInstance(AccountFactory.class);
+        Account account = accountFactory.retrieve(1, id);
+        if (account == null || account.equals(accountFactory.getEmpty( )))
+        {
+            String screenName = json.getString("screen_name");
+            if (screenName == null || screenName.isEmpty( ))
+            {
+                throw new AssertionError ("Screen name is missing.");
+            }
+            account = accountFactory.create(1, id, screenName);
+        }
+        return Response.ok( ).entity(account).build();
     }
 
     @POST
