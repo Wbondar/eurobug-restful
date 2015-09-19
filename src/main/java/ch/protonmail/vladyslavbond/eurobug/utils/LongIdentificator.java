@@ -11,6 +11,13 @@ extends NumericIdentificator<T>
     public LongIdentificator (long id)
     {
         this.id = id;
+        this.hashCode = LongIdentificator.class.hashCode( ) + Long.valueOf(this.id).hashCode( );
+    }
+    
+    public LongIdentificator (Long id)
+    {
+        this.id = id.longValue( );
+        this.hashCode = LongIdentificator.class.hashCode( ) + id.hashCode( );
     }
 
     private final long id;
@@ -54,12 +61,26 @@ extends NumericIdentificator<T>
     @Override
     public boolean equals (Object o)
     {
-        return Long.valueOf(this.id).equals(o);
+        if (o == null)
+        {
+            return false;
+        }
+        if (o == this)
+        {
+            return true;
+        }
+        if (o instanceof LongIdentificator)
+        {
+            return (o.hashCode( ) == this.hashCode( ));
+        }
+        return false;
     }
+    
+    transient private final int hashCode;
 
     @Override
     public int hashCode ( )
     {
-        return Long.valueOf(this.id).hashCode( );
+        return this.hashCode;
     }
 }

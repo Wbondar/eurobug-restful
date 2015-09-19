@@ -24,26 +24,21 @@ public class Account
 
 	private Account ( )
 	{
-		this(0L, "nominevacans");
-	}
-
-	private Account (long id, String name)
-	{
-		this.id   = id;
-		this.name = name;
+		this(NumericIdentificator.<Account>valueOf(0L), "nominevacans");
 	}
 
 	Account (Identificator<Account> id, String name)
 	{
-		this(((NumericIdentificator<Account>)id).longValue( ), name);
+        this.id   = id;
+        this.name = name;
+        this.hashCode = Account.class.hashCode( ) + id.hashCode( ) + name.hashCode( );
 	}
 
-	@XmlAttribute(name = "id")
-	private final long id;
+	private final Identificator<Account> id;
 
 	public final Identificator<Account> getId ( )
 	{
-		return (Identificator<Account>)NumericIdentificator.<Account>valueOf(this.id);
+		return this.id;
 	}
 
 	private final String name;
@@ -52,5 +47,31 @@ public class Account
 	public final String getName ( )
 	{
 		return this.name;
+	}
+	
+	@Override
+	public boolean equals (Object o)
+	{
+	    if (o == null)
+	    {
+	        return false;
+	    }
+	    if (o == this)
+	    {
+	        return true;
+	    }
+	    if (o instanceof Account)
+	    {
+	        return o.hashCode( ) == this.hashCode( );
+	    }
+	    return false;
+	}
+	
+	transient private final int hashCode;
+	
+	@Override
+	public int hashCode ( )
+	{
+	    return hashCode;
 	}
 }
