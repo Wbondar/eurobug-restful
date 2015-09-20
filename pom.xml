@@ -49,6 +49,12 @@
         <artifactId>json</artifactId>
         <version>20141113</version>
       </dependency>
+      <dependency>
+        <groupId>org.postgresql</groupId>
+        <artifactId>postgresql</artifactId>
+        <version>9.4-1200-jdbc41</version>
+        <scope>runtime</scope>
+      </dependency>
     </dependencies>
     
     <build>

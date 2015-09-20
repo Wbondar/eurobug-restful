@@ -63,58 +63,83 @@ implements Resource
     
     final Account create (Integer idOfProvider, Long idOfAccount, String screenName)
     {
-        AccountFactory accountFactory = Factories.<AccountFactory>getInstance(AccountFactory.class);
-        if (idOfProvider == null || idOfProvider <= 0)
+        try
         {
-            throw new RuntimeException ("Id of provider is missing.");
+            if (idOfProvider == null || idOfProvider <= 0)
+            {
+                throw new RuntimeException ("Id of provider is missing.");
+            }
+            if (idOfAccount == null || idOfAccount <= 0)
+            {
+                throw new RuntimeException ("Id of account is missing.");
+            }
+            if (screenName == null || screenName.isEmpty( ))
+            {
+                throw new RuntimeException ("Name of account is missing.");
+            }
+            AccountFactory accountFactory = Factories.<AccountFactory>getInstance(AccountFactory.class);
+            return accountFactory.create(idOfProvider, idOfAccount, screenName);   
+        } catch (Exception e) {
+            throw new RuntimeException ("Failed to create an account.", e);
         }
-        if (idOfAccount == null || idOfAccount <= 0)
-        {
-            throw new RuntimeException ("Id of account is missing.");
-        }
-        if (screenName == null || screenName.isEmpty( ))
-        {
-            throw new RuntimeException ("Name of account is missing.");
-        }
-        return accountFactory.create(idOfProvider, idOfAccount, screenName);   
     }
     
     final Account retrieve (Integer idOfProvider, Long idOfAccount)
     {
-        AccountFactory accountFactory = Factories.<AccountFactory>getInstance(AccountFactory.class);
-        if (idOfProvider == null || idOfProvider <= 0)
+        try
         {
-            throw new RuntimeException ("Id of provider is missing.");
+            if (idOfProvider == null || idOfProvider <= 0)
+            {
+                throw new RuntimeException ("Id of provider is missing.");
+            }
+            if (idOfAccount == null || idOfAccount <= 0)
+            {
+                throw new RuntimeException ("Id of account is missing.");
+            }
+            AccountFactory accountFactory = Factories.<AccountFactory>getInstance(AccountFactory.class);
+            return accountFactory.retrieve(idOfProvider, idOfAccount);
+        } catch (Exception e) {
+            throw new RuntimeException ("Failed to retrieve an account.", e);
         }
-        if (idOfAccount == null || idOfAccount <= 0)
-        {
-            throw new RuntimeException ("Id of account is missing.");
-        }
-        return accountFactory.retrieve(idOfProvider, idOfAccount);
     }
     
     final Account process (Integer idOfProvider, Long idOfAccount, String screenName)
     {
-        Account account = this.retrieve(idOfProvider, idOfAccount);
-        if (account != null)
+        try
         {
-            return account;
+            AccountFactory accountFactory = Factories.<AccountFactory>getInstance(AccountFactory.class);
+            Account account = this.retrieve(idOfProvider, idOfAccount);
+            if (account != null && !account.equals(accountFactory.getEmpty( )) && account != accountFactory.getEmpty( ))
+            {
+                return account;
+            }
+            account = this.create(idOfProvider, idOfAccount, screenName);
+            if (account != null && !account.equals(accountFactory.getEmpty( )) && account != accountFactory.getEmpty( ))
+            {
+                return account;
+            }
+            throw new RuntimeException ("Account is missing.");
+        } catch (Exception e) {
+            throw new RuntimeException ("Failed to process the authentication request.", e);
         }
-        account = this.create(idOfProvider, idOfAccount, screenName);
-        if (account != null)
-        {
-            return account;
-        }
-        throw new RuntimeException ("Account is missing.");
     }
     
     final Account processTwitter (String data)
     {
-        JSONObject json = new JSONObject (data);
-        Integer idOfProvider = ApplicationOAuthService.TWITTER.getId( );
-        Long id = json.getLong("id");
-        String screenName = json.getString("screen_name");
-        return this.process(idOfProvider, id, screenName);
+        try
+        {
+            if (data == null || data.isEmpty( ))
+            {
+                throw new RuntimeException ("Data is missing.");
+            }
+            JSONObject json = new JSONObject (data);
+            Integer idOfProvider = ApplicationOAuthService.TWITTER.getId( );
+            Long id = json.getLong("id");
+            String screenName = json.getString("screen_name");
+            return this.process(idOfProvider, id, screenName);
+        } catch (Exception e) {
+            throw new RuntimeException ("Failed to process response from Twitter.", e);
+        }
     }
     
     @GET
