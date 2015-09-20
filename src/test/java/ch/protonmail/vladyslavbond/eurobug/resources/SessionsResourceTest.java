@@ -45,22 +45,21 @@ extends Object
     public void testProcessTwitter ( ) 
     {
         AccountFactory accountFactory = Factories.<AccountFactory>getInstance(AccountFactory.class);
-        Account account = this.resource.processTwitter(correctData);
-        assertTrue(account != null && !account.equals(accountFactory.getEmpty( )) && account != accountFactory.getEmpty( ));
-        Account retrievedAccount = accountFactory.retrieve(account.getId( ));
-        assertEquals(account, retrievedAccount);
-        retrievedAccount = accountFactory.retrieve(1, 2367864038L);
-        assertEquals(account, retrievedAccount);
+        for (int i = 0; i < 10; i++)
+        {
+            Account account = this.resource.processTwitter(correctData);
+            assertTrue(account != null && !account.equals(accountFactory.getEmpty( )) && account != accountFactory.getEmpty( ));
+            Account retrievedAccount = accountFactory.retrieve(account.getId( ));
+            assertEquals(account, retrievedAccount);
+            retrievedAccount = accountFactory.retrieve(1, 2367864038L);
+            assertEquals(account, retrievedAccount);
+        }
     }
 
     @After
     public final void tearDownSessionsResourceTest ( )
     {
         AccountFactory accountFactory = Factories.<AccountFactory>getInstance(AccountFactory.class);
-        boolean success = accountFactory.destroy(NumericIdentificator.<Account>valueOf(12367864038L));
-        if (!success)
-        {
-            throw new RuntimeException ("Failed to desroy an account that must be there.");
-        }
+        accountFactory.destroy(NumericIdentificator.<Account>valueOf(12367864038L));
     }
 }

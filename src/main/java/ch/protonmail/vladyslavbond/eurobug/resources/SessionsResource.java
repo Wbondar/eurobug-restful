@@ -61,27 +61,60 @@ implements Resource
         }
     }
     
+    final Account create (Integer idOfProvider, Long idOfAccount, String screenName)
+    {
+        AccountFactory accountFactory = Factories.<AccountFactory>getInstance(AccountFactory.class);
+        if (idOfProvider == null || idOfProvider <= 0)
+        {
+            throw new RuntimeException ("Id of provider is missing.");
+        }
+        if (idOfAccount == null || idOfAccount <= 0)
+        {
+            throw new RuntimeException ("Id of account is missing.");
+        }
+        if (screenName == null || screenName.isEmpty( ))
+        {
+            throw new RuntimeException ("Name of account is missing.");
+        }
+        return accountFactory.create(idOfProvider, idOfAccount, screenName);   
+    }
+    
+    final Account retrieve (Integer idOfProvider, Long idOfAccount)
+    {
+        AccountFactory accountFactory = Factories.<AccountFactory>getInstance(AccountFactory.class);
+        if (idOfProvider == null || idOfProvider <= 0)
+        {
+            throw new RuntimeException ("Id of provider is missing.");
+        }
+        if (idOfAccount == null || idOfAccount <= 0)
+        {
+            throw new RuntimeException ("Id of account is missing.");
+        }
+        return accountFactory.retrieve(idOfProvider, idOfAccount);
+    }
+    
+    final Account process (Integer idOfProvider, Long idOfAccount, String screenName)
+    {
+        Account account = this.retrieve(idOfProvider, idOfAccount);
+        if (account != null)
+        {
+            return account;
+        }
+        account = this.create(idOfProvider, idOfAccount, screenName);
+        if (account != null)
+        {
+            return account;
+        }
+        throw new RuntimeException ("Account is missing.");
+    }
+    
     final Account processTwitter (String data)
     {
         JSONObject json = new JSONObject (data);
+        Integer idOfProvider = ApplicationOAuthService.TWITTER.getId( );
         Long id = json.getLong("id");
-        if (id == null || id <= 0)
-        {
-            throw new RuntimeException ("Identitifcator is missing.");
-        }
-        AccountFactory accountFactory = Factories.<AccountFactory>getInstance(AccountFactory.class);
-        Account account = accountFactory.retrieve(1, id);
-        if (account == null || account.equals(accountFactory.getEmpty( )))
-        {
-            String screenName = json.getString("screen_name");
-            if (screenName == null || screenName.isEmpty( ))
-            {
-                throw new RuntimeException ("Screen name is missing.");
-            }
-            account = accountFactory.create(1, id, screenName);
-            return account;
-        }
-        throw new RuntimeException ("Account is mising.");
+        String screenName = json.getString("screen_name");
+        return this.process(idOfProvider, id, screenName);
     }
     
     @GET
