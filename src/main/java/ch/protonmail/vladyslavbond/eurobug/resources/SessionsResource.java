@@ -39,6 +39,8 @@ import ch.protonmail.vladyslavbond.eurobug.utils.Username;
 public final class SessionsResource
 implements Resource
 {   
+    public SessionsResource ( ) {}
+    
     @GET
     @Path("/{api}/create")
     public Response oauth (@PathParam("api") String api)
@@ -59,9 +61,32 @@ implements Resource
         }
     }
     
+    final Account processTwitter (String data)
+    {
+        JSONObject json = new JSONObject (data);
+        Long id = json.getLong("id");
+        if (id == null || id <= 0)
+        {
+            throw new RuntimeException ("Identitifcator is missing.");
+        }
+        AccountFactory accountFactory = Factories.<AccountFactory>getInstance(AccountFactory.class);
+        Account account = accountFactory.retrieve(1, id);
+        if (account == null || account.equals(accountFactory.getEmpty( )))
+        {
+            String screenName = json.getString("screen_name");
+            if (screenName == null || screenName.isEmpty( ))
+            {
+                throw new RuntimeException ("Screen name is missing.");
+            }
+            account = accountFactory.create(1, id, screenName);
+            return account;
+        }
+        throw new RuntimeException ("Account is mising.");
+    }
+    
     @GET
     @Path("/twitter/callback")
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_HTML})
     public Response twitterToken (@QueryParam("oauth_token") String queryToken, @QueryParam("oauth_verifier") String queryVerifier)
     {
         try
@@ -74,32 +99,16 @@ implements Resource
             ApplicationOAuthService.TWITTER.signRequest(accessToken, request);
 
             org.scribe.model.Response response = request.send();
-            JSONObject json = new JSONObject (response.getBody());
-            Long id = json.getLong("id");
-            if (id == null)
-            {
-                throw new AssertionError ("Identitifcator is missing.");
-            }
-            AccountFactory accountFactory = Factories.<AccountFactory>getInstance(AccountFactory.class);
-            Account account = accountFactory.retrieve(1, id);
-            if (account == null || account.equals(accountFactory.getEmpty( )))
-            {
-                String screenName = json.getString("screen_name");
-                if (screenName == null || screenName.isEmpty( ))
-                {
-                    throw new AssertionError ("Screen name is missing.");
-                }
-                account = accountFactory.create(1, id, screenName);
-            }
-            if (account != null && !account.equals(accountFactory.getEmpty( )))
+            Account account = this.processTwitter(response.getBody( ));
+            if (account != null)
             {
                 Session session = Session.newInstance(account);
                 NewCookie cookie = new NewCookie ("JSESSIONID", session.getId( ).toString( ));
                 return Response.ok( ).cookie(cookie).entity(account).build();   
             }
-            throw new AssertionError ("Account is mising.");
+            return Response.serverError( ).entity("Account is missing.").build( );
         } catch (Exception e) {
-            return Response.serverError( ).entity(e.getLocalizedMessage( )).build( );
+            return Response.serverError( ).entity(e.getMessage( )).build( );
         }
     }
 

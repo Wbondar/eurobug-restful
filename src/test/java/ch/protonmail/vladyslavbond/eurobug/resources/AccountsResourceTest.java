@@ -20,7 +20,7 @@ extends ResourceTest
 	public final void setUpAccountsResourceTest ( )
     {
     	AccountFactory accountFactory = Factories.<AccountFactory>getInstance(AccountFactory.class);
-    	accountFactory.create(1, 2367864038L, "Vladyslav Bondarenko");
+    	accountFactory.create(1, 2367864038L, "vladyslavbond");
     }
     
     @Test

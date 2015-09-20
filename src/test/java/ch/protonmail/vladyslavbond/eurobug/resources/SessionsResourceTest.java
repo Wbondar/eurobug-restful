@@ -9,12 +9,27 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import ch.protonmail.vladyslavbond.eurobug.domain.Account;
+import ch.protonmail.vladyslavbond.eurobug.domain.AccountFactory;
+import ch.protonmail.vladyslavbond.eurobug.domain.Factories;
+import ch.protonmail.vladyslavbond.eurobug.utils.NumericIdentificator;
+
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public final class SessionsResourceTest 
-extends ResourceTest
+extends Object
 /*extends JerseyTest*/
 {
+    private static final String correctData = "{\"id\":2367864038,\"screen_name\":\"vladyslavbond\"}";
+    private final SessionsResource resource;
+    
+    public SessionsResourceTest ( )
+    {
+        this.resource = new SessionsResource ( );
+    }
+    
     /*@Override
     protected Application configure ( ) 
     {
@@ -27,15 +42,25 @@ extends ResourceTest
     }
     
     @Test
-    public void testCreate ( ) 
+    public void testProcessTwitter ( ) 
     {
-        Response response = target("/sessions/twitter/create")
-    		   .request( ).get( );
-        assertFalse(response.getCookies( ).get("JSESSIONID").getValue( ).isEmpty( ));
+        AccountFactory accountFactory = Factories.<AccountFactory>getInstance(AccountFactory.class);
+        Account account = this.resource.processTwitter(correctData);
+        assertTrue(account != null && !account.equals(accountFactory.getEmpty( )) && account != accountFactory.getEmpty( ));
+        Account retrievedAccount = accountFactory.retrieve(account.getId( ));
+        assertEquals(account, retrievedAccount);
+        retrievedAccount = accountFactory.retrieve(1, 2367864038L);
+        assertEquals(account, retrievedAccount);
     }
 
     @After
     public final void tearDownSessionsResourceTest ( )
     {
+        AccountFactory accountFactory = Factories.<AccountFactory>getInstance(AccountFactory.class);
+        boolean success = accountFactory.destroy(NumericIdentificator.<Account>valueOf(12367864038L));
+        if (!success)
+        {
+            throw new RuntimeException ("Failed to desroy an account that must be there.");
+        }
     }
 }
